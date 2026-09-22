@@ -1,0 +1,10 @@
+{
+  "description": "This web application features a main page with four interactive sectors, serving as distinct pages for easy navigation and enhanced user experience.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
