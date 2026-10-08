@@ -3,7 +3,11 @@ import heroImage from "./imports/hero.png"
 import mapImage from "./imports/hero.png"
 
 const sector1Image = new URL(
-  "./imports/Gemini_Generated_Image_p2flhnp2flhnp2fl.jfif",
+  "./imports/sector1-main.jfif",
+  import.meta.url,
+).href
+const sector2Image = new URL(
+  "./imports/sector2-main.jfif",
   import.meta.url,
 ).href
 
@@ -36,6 +40,8 @@ interface SectorInfo {
   features: string[]
   statusColor: string
   detailImage?: string
+  detailCanvasWidth?: string
+  detailAspectRatio?: string
   pois?: POI[]
 }
 
@@ -45,8 +51,8 @@ const SECTOR1_POIS: POI[] = [
   {
     name: "საკონსერვე სანარმო",
     en: "Canning Facility",
-    left: "7.9%",
-    top: "23.5%",
+    left: "15.3%",
+    top: "20%",
     description:
       "ადგილობრივი ჯემების, კომპოტების, სეზონური კონსერვებისა და მარინადების წარმოება. ყველა პროდუქტი მზადდება ნიაბის მამულის პირდაპირი ნედლეულიდან — ხელნაკეთი, ბუნებრივი, ყოველგვარი შენარჩუნებელი ნივთიერების გარეშე.",
     details: [
@@ -59,8 +65,8 @@ const SECTOR1_POIS: POI[] = [
   {
     name: "სამაცივრე სივრცე",
     en: "Cold Storage",
-    left: "12.05%",
-    top: "14.74%",
+    left: "18.75%",
+    top: "12.9%",
     description:
       "სპეციალიზებული სამაცივრე სივრცე ახლად მოყვანილი პროდუქტებისა და ბოსტნეულის შესანახად. ნიაბის მამულის ფერმიდან პირდაპირ მომხმარებლამდე — სრული სიახლე და ხარისხი.",
     details: [
@@ -73,7 +79,7 @@ const SECTOR1_POIS: POI[] = [
   {
     name: "სატბური ორანჟერია",
     en: "Heated Orangery",
-    left: "21.85%",
+    left: "24.85%",
     top: "35%",
     description:
       "თანამედროვე სათბური ორანჟერია, სადაც მრავალსახეობიანი ეგზოტიკური და ადგილობრივი მცენარეები ხარობს. სტუმრებს შეუძლიათ ეწვიონ და უშუალოდ ნახონ პროდუქციის ზრდის პროცესი.",
@@ -143,8 +149,8 @@ const SECTOR1_POIS: POI[] = [
   {
     name: "ხეხილის ბალები",
     en: "Khekili Meadows",
-    left: "16%",
-    top: "28%",
+    left: "21.5%",
+    top: "25%",
     description:
       'ნიაბის მამულის განთქმული "კეხილის ბალები" — ტრადიციული ქართული სახელწოდება. ეს ბუნებრივი მდელო ლურჯი ყვავილებით, ალვის ხეებითა და ტრადიციული ბალახეულებით გაჯერებული ზონაა.',
     details: [
@@ -312,6 +318,9 @@ const SECTORS: SectorInfo[] = [
       "სათემო ინფრასტრუქტურა",
     ],
     statusColor: "#4ade80",
+    detailImage: sector2Image,
+    detailCanvasWidth: "min(100vw, 182.552083vh)",
+    detailAspectRatio: "2804 / 1536",
   },
   {
     id: 3,
@@ -495,13 +504,81 @@ function SectorMapPage({
 
   return (
     <div className="page-enter relative w-full h-screen overflow-hidden bg-[#0a0e0a]">
-      {/* Full-screen sector image */}
-      <img
-        src={sector.detailImage}
-        alt={sector.labelGeo}
-        className="w-full h-full object-cover object-center"
-        style={{ filter: "brightness(0.88)" }}
-      />
+      {/* Full-width map canvas wrapper */}
+      <div className="absolute inset-0 w-full h-full">
+        <div className="relative w-full h-full">
+          <img
+            src={sector.detailImage}
+            alt={sector.labelGeo}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ filter: "brightness(0.88)" }}
+          />
+
+          {/* POI overlay buttons — positioned over each baked-in label */}
+          {sector.pois?.map((poi, i) => {
+            const isHov = hoveredPoi === i
+            return (
+              <button
+                key={i}
+                onClick={() => onSelectPoi(poi)}
+                onMouseEnter={() => setHoveredPoi(i)}
+                onMouseLeave={() => setHoveredPoi(null)}
+                className="absolute z-10 flex flex-col items-center cursor-pointer group"
+                style={{
+                  left: poi.left,
+                  top: poi.top,
+                  transform: "translate(-50%, -50%)",
+                }}
+                aria-label={poi.name}
+              >
+                {/* Always-visible pulsing dot */}
+                <div className="relative flex items-center justify-center">
+                  {/* Outer ring */}
+                  <div
+                    className="absolute rounded-full border transition-all duration-300"
+                    style={{
+                      width: isHov ? 36 : 24,
+                      height: isHov ? 36 : 24,
+                      borderColor: "#c9a84c",
+                      opacity: isHov ? 0.6 : 0.4,
+                    }}
+                  />
+                  {/* Inner dot */}
+                  <div
+                    className="rounded-full transition-all duration-200"
+                    style={{
+                      width: isHov ? 12 : 8,
+                      height: isHov ? 12 : 8,
+                      background: "#c9a84c",
+                      boxShadow: isHov
+                        ? "0 0 10px #c9a84c"
+                        : "0 0 4px rgba(201,168,76,0.5)",
+                    }}
+                  />
+                </div>
+
+                {/* Label — appears on hover */}
+                <div
+                  className="mt-1.5 px-2.5 py-1 whitespace-nowrap transition-all duration-200 pointer-events-none"
+                  style={{
+                    background: "rgba(10,14,10,0.88)",
+                    border: "1px solid rgba(201,168,76,0.5)",
+                    backdropFilter: "blur(6px)",
+                    opacity: isHov ? 1 : 0,
+                    transform: isHov
+                      ? "translateY(0)"
+                      : "translateY(-4px)",
+                  }}
+                >
+                  <span className="font-['Outfit'] text-[10px] tracking-wide text-[#c9a84c] whitespace-nowrap">
+                    {poi.name}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Top-left title */}
       <div className="absolute top-0 left-0 z-20">
@@ -555,68 +632,6 @@ function SectorMapPage({
           </span>
         </button>
       </div>
-
-      {/* POI overlay buttons — positioned over each baked-in label */}
-      {sector.pois?.map((poi, i) => {
-        const isHov = hoveredPoi === i
-        return (
-          <button
-            key={i}
-            onClick={() => onSelectPoi(poi)}
-            onMouseEnter={() => setHoveredPoi(i)}
-            onMouseLeave={() => setHoveredPoi(null)}
-            className="absolute z-10 flex flex-col items-center cursor-pointer group"
-            style={{
-              left: poi.left,
-              top: poi.top,
-              transform: "translate(-50%, -50%)",
-            }}
-            aria-label={poi.name}
-          >
-            {/* Always-visible pulsing dot */}
-            <div className="relative flex items-center justify-center">
-              {/* Outer ring */}
-              <div
-                className="absolute rounded-full border transition-all duration-300"
-                style={{
-                  width: isHov ? 36 : 24,
-                  height: isHov ? 36 : 24,
-                  borderColor: "#c9a84c",
-                  opacity: isHov ? 0.6 : 0.4,
-                }}
-              />
-              {/* Inner dot */}
-              <div
-                className="rounded-full transition-all duration-200"
-                style={{
-                  width: isHov ? 12 : 8,
-                  height: isHov ? 12 : 8,
-                  background: "#c9a84c",
-                  boxShadow: isHov
-                    ? "0 0 10px #c9a84c"
-                    : "0 0 4px rgba(201,168,76,0.5)",
-                }}
-              />
-            </div>
-
-            {/* Label — appears on hover */}
-            <div
-              className="mt-1.5 px-2.5 py-1 whitespace-nowrap transition-all duration-200 pointer-events-none"
-              style={{
-                background: "rgba(10,14,10,0.88)",
-                border: "1px solid rgba(201,168,76,0.5)",
-                backdropFilter: "blur(6px)",
-                opacity: isHov ? 1 : 0,
-                transform: isHov ? "translateY(0)" : "translateY(-4px)",
-              }}
-            >
-              <span className="font-['Outfit'] text-[10px] tracking-wide text-[#c9a84c] whitespace-nowrap">
-                {poi.name}
-              </span>
-            </div>
-          </button>
-        )
-      })}
 
       {/* Bottom sector navigation */}
       <div
